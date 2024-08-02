@@ -10,7 +10,7 @@ class TestDataSampler(unittest.TestCase):
     def setUp(self):
         self.sampler = DataSampler()
 
-    def test_provided_measurements_example(self):
+    def test_given_measurements_example(self):
         measurements = [
             Measurement(datetime.strptime('2017-01-03T10:04:45', '%Y-%m-%dT%H:%M:%S'), MeasType.TEMP, 35.79),
             Measurement(datetime.strptime('2017-01-03T10:01:18', '%Y-%m-%dT%H:%M:%S'), MeasType.SPO2, 98.78),
@@ -224,6 +224,41 @@ class TestDataSampler(unittest.TestCase):
         sampled = self.sampler.sample_measurements(measurements)
         self.assertEqual(len(sampled), 4)
         self.assertEqual(set(m.measurement_type for m in sampled), {MeasType.TEMP, MeasType.SPO2, MeasType.HR})
+
+    def test_measurements_on_interval_boundaries(self):
+        measurements = [
+            Measurement(datetime(2024, 1, 1, 10, 0), MeasType.TEMP, 36.0),
+            Measurement(datetime(2024, 1, 1, 10, 5), MeasType.TEMP, 36.5),
+            Measurement(datetime(2024, 1, 1, 10, 10), MeasType.HR, 37.0),
+        ]
+        sampled = self.sampler.sample_measurements(measurements)
+        self.assertEqual(len(sampled), 3)
+        self.assertEqual(sampled[0].measurement_time, datetime(2024, 1, 1, 10, 0))
+        self.assertEqual(sampled[1].measurement_time, datetime(2024, 1, 1, 10, 5))
+        self.assertEqual(sampled[2].measurement_time, datetime(2024, 1, 1, 10, 10))
+
+    def test_rapid_succession_measurements(self):
+        measurements = [
+            Measurement(datetime(2024, 1, 1, 10, 1, 1), MeasType.TEMP, 36.0),
+            Measurement(datetime(2024, 1, 1, 10, 1, 2), MeasType.TEMP, 36.1),
+            Measurement(datetime(2024, 1, 1, 10, 1, 3), MeasType.TEMP, 36.2),
+        ]
+        sampled = self.sampler.sample_measurements(measurements)
+        self.assertEqual(len(sampled), 1)
+        self.assertEqual(sampled[0].measurement_time, datetime(2024, 1, 1, 10, 5))
+        self.assertEqual(sampled[0].value, 36.2)
+
+    def test_sparse_measurements(self):
+        measurements = [
+            Measurement(datetime(2024, 1, 1, 10, 1), MeasType.TEMP, 36.0),
+            Measurement(datetime(2024, 1, 1, 11, 1), MeasType.HR, 36.5),
+            Measurement(datetime(2024, 1, 1, 12, 1), MeasType.TEMP, 37.0),
+        ]
+        sampled = self.sampler.sample_measurements(measurements)
+        self.assertEqual(len(sampled), 3)
+        self.assertEqual(sampled[0].measurement_time, datetime(2024, 1, 1, 10, 5))
+        self.assertEqual(sampled[1].measurement_time, datetime(2024, 1, 1, 11, 5))
+        self.assertEqual(sampled[2].measurement_time, datetime(2024, 1, 1, 12, 5))
 
     def test_print_data_empty(self):
         captured_output = io.StringIO()
