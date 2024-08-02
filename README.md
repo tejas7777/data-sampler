@@ -11,7 +11,7 @@ DataSampler is a Python package designed to sample time-based measurement data f
 To install the package, clone the repository and install the dependencies:
 ```bash
 git clone https://github.com/tejas7777/data-sampler.git
-cd datasampler
+cd data-sampler
 pip install -r requirements.txt
 ```
 ## Usage
