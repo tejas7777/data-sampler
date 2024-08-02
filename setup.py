@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name="data-sampler",
-    version="0.1",
-    author="tejas",
+    version="1.1",
+    author="tejas chendekar",
     author_email="tejaschendekar2@gmail.com",
     packages=find_packages(),
     classifiers=[
