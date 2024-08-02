@@ -51,4 +51,3 @@ if __name__ == '__main__':
 
     print("--------------Example 3: Sample Measurements by Type--------------")
     DataSampler.print_data( data_sampler.sample_measurements_by_type(generated_measurement) )
-
