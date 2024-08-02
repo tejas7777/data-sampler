@@ -41,13 +41,32 @@ sampled_data = sampler.sample_measurements(measurements)
 # Print the sampled data
 DataSampler.print_data(sampled_data)
 ```
-### Output
+#### Output
 ```terminal
 {2017-01-03T10:05:00, SPO2, 97.17}
 {2017-01-03T10:05:00, TEMP, 35.79}
 {2017-01-03T10:10:00, SPO2, 95.08}
 {2017-01-03T10:10:00, TEMP, 35.01}
 ```
+
+### Use the group by method to get output based on measurement types
+
+```python
+
+grouped_samples = data_sampler.sample_measurements_by_type(measurements)
+DataSampler.print_data(grouped_samples)
+```
+
+##### Output
+```terminal
+Measurement Type: SPO2
+  {2017-01-03T10:05:00, 97.17}
+  {2017-01-03T10:10:00, 95.08}
+Measurement Type: TEMP
+  {2017-01-03T10:05:00, 35.79}
+  {2017-01-03T10:10:00, 35.01}
+```
+
 
 ### More Detailed Example
 ```python
