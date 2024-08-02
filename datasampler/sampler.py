@@ -214,7 +214,7 @@ class DataSampler:
                 to begin generating intervals
 
         Returns:
-            set[datetime]: A list of datetime objects representing the start of each interval
+            set[datetime]: A set of datetime objects representing the start of each interval
         """
         if not measurements:
             return set()
