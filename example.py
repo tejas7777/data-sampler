@@ -1,8 +1,8 @@
+import random
+from typing import List
+from datetime import datetime, timedelta
 from datasampler.sampler import DataSampler
 from datasampler.measurement import Measurement, MeasType
-from typing import List
-import random
-from datetime import datetime, timedelta
 
 def generate_measurements(num_measurements: int) -> List[Measurement]:
     """
