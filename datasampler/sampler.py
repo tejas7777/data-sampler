@@ -75,7 +75,7 @@ class DataSampler:
             return sorted(sampled_measurements, key=lambda m: m.measurement_time)
 
         return sampled_measurements
-    
+   
     def sample_measurements_by_type(self, unsampled_measurements: List[Measurement],
                                     interval: Optional[int] = None, 
                                     start_of_sampling: Optional[datetime] = None
@@ -177,7 +177,7 @@ class DataSampler:
         sampled = []
         if not measurements:
             return sampled
- 
+
         current_interval_end = self.__get_interval_start(measurements[0].measurement_time) \
                                 + timedelta(minutes=self.interval)
         last_measurement = None
@@ -214,7 +214,7 @@ class DataSampler:
                 to begin generating intervals
 
         Returns:
-            List[datetime]: A list of datetime objects representing the start of each interval
+            set[datetime]: A list of datetime objects representing the start of each interval
         """
         if not measurements:
             return set()
