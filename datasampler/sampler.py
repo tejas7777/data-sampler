@@ -72,7 +72,7 @@ class DataSampler:
                 )
 
         if to_sort:
-            return sorted(sampled_measurements, key=lambda m: m.measurement_time)
+            return sampled_measurements
 
         return sampled_measurements
     
