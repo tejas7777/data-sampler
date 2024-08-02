@@ -41,15 +41,32 @@ input = [
 if __name__ == '__main__':
     print("--------------Example 1: Small Input Data--------------")
     data_sampler = DataSampler(5)
-    sampled_data = data_sampler.sample_measurements(input)
-    DataSampler.print_data(sampled_data)
+    #sampled_data = data_sampler.sample_measurements(input)
 
-    print("--------------Example 2: Generated Input Data Data--------------")
+    measurements = [
+            Measurement(datetime(2024, 1, 1, 10, 7), MeasType.TEMP, 36.0),
+            Measurement(datetime(2024, 1, 1, 10, 10), MeasType.TEMP, 36.1),
+            Measurement(datetime(2024, 1, 1, 10, 10), MeasType.SPO2, 36.5),
+            Measurement(datetime(2024, 1, 1, 10, 10), MeasType.HR, 36.5),
+            Measurement(datetime(2024, 1, 1, 10, 15), MeasType.HR, 36.7),
+            Measurement(datetime(2024, 1, 1, 10, 25), MeasType.HR, 30.5),
+        ]
+    
+    sampled = data_sampler.sample_measurements(measurements)
 
-    generated_measurement = generate_measurements(100)
-    DataSampler.print_data( data_sampler.sample_measurements(generated_measurement) )
+    DataSampler.print_data( sampled )
 
-    print("--------------Example 3: Sample Measurements by Type--------------")
 
-    DataSampler.print_data( data_sampler.sample_measurements_by_type(generated_measurement) )
+
+
+    #DataSampler.print_data(sampled_data)
+
+    # print("--------------Example 2: Generated Input Data Data--------------")
+
+    # generated_measurement = generate_measurements(100)
+    # DataSampler.print_data( data_sampler.sample_measurements(generated_measurement) )
+
+    # print("--------------Example 3: Sample Measurements by Type--------------")
+
+    # DataSampler.print_data( data_sampler.sample_measurements_by_type(generated_measurement) )
 

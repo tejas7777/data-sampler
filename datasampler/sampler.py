@@ -57,14 +57,14 @@ class DataSampler:
         if interval is not None and interval > 0:
             self.interval = interval
 
-        sorted_measurements = self._sort_and_filter_measurements(unsampled_measurements, start_of_sampling)
-        
-        grouped_measurements = self._group_measurements_by_type(sorted_measurements)
+        sorted_measurements = self.__sort_and_filter_measurements(unsampled_measurements, start_of_sampling)
+        intervals: set = self.__generate_intervals(sorted_measurements, start_of_sampling)
+        grouped_measurements = self.__group_measurements_by_type(sorted_measurements)
         
         sampled_measurements = []
         for meas_type, measurements in grouped_measurements.items():
             sampled_measurements.extend(
-                self._sample_single_type(meas_type, measurements)
+                self.__sample_single_type(meas_type, measurements, intervals)
                 )
 
         if to_sort:
@@ -91,44 +91,18 @@ class DataSampler:
         if interval is not None and interval > 0:
             self.interval = interval
 
-        sorted_measurements = self._sort_and_filter_measurements(unsampled_measurements, start_of_sampling)
-        grouped_measurements = self._group_measurements_by_type(sorted_measurements)
+        sorted_measurements = self.__sort_and_filter_measurements(unsampled_measurements, start_of_sampling)
+        intervals: set = self.__generate_intervals(sorted_measurements, start_of_sampling)
+        grouped_measurements = self.__group_measurements_by_type(sorted_measurements)
         
         sampled_measurements = {}
         for meas_type, measurements in grouped_measurements.items():
-            sampled_measurements[meas_type] = self._sample_single_type(meas_type, measurements)
+            sampled_measurements[meas_type] = self.__sample_single_type(meas_type, measurements, intervals)
 
         return sampled_measurements
+
     
-    def sample_measurements_by_type(self, unsampled_measurements: List[Measurement],
-                                interval: Optional[int] = None, 
-                                start_of_sampling: Optional[datetime] = None
-                               ) -> dict[MeasType, list[Measurement]]:
-        """
-        Samples data and returns results grouped by measurement type.
-        
-        Args:
-            unsampled_measurements (List[Measurement]): A list of Measurement objects to be sampled.
-            interval (int, optional): A new interval in minutes for sampling data, if provided.
-            start_of_sampling (datetime, optional): The start datetime from which to begin sampling.
-
-        Returns:
-            dict[MeasType, list[Measurement]]: A dictionary with measurement types as keys and 
-                                            lists of sampled Measurement objects as values.
-        """
-        if interval is not None and interval > 0:
-            self.interval = interval
-
-        sorted_measurements = self._sort_and_filter_measurements(unsampled_measurements, start_of_sampling)
-        grouped_measurements = self._group_measurements_by_type(sorted_measurements)
-        
-        sampled_measurements = {}
-        for meas_type, measurements in grouped_measurements.items():
-            sampled_measurements[meas_type] = self._sample_single_type(meas_type, measurements)
-
-        return sampled_measurements
-    
-    def _get_interval_start(self, time: datetime) -> datetime:
+    def __get_interval_start(self, time: datetime) -> datetime:
         """
          [Private Method Sample] Get the start time of the interval for a given timestamp.
 
@@ -141,7 +115,7 @@ class DataSampler:
         minutes = (time.minute // self.interval) * self.interval
         return time.replace(minute=minutes, second=0, microsecond=0)
 
-    def _sort_and_filter_measurements(self, measurements: List[Measurement], start_time: Optional[datetime]) -> List[Measurement]:
+    def __sort_and_filter_measurements(self, measurements: List[Measurement], start_time: Optional[datetime]) -> List[Measurement]:
         """
         [Private Method Sample] Sorts measurements by time and filters based on an optional start time.
         
@@ -157,7 +131,7 @@ class DataSampler:
             return [m for m in sorted_measurements if m.measurement_time >= start_time]
         return sorted_measurements
 
-    def _group_measurements_by_type(self, measurements: List[Measurement]) -> dict[MeasType, List[Measurement]]:
+    def __group_measurements_by_type(self, measurements: List[Measurement]) -> dict[MeasType, List[Measurement]]:
         """
         [Private Method Sample] Groups measurements by their measurement type.
         
@@ -173,34 +147,69 @@ class DataSampler:
             grouped[measurement.measurement_type].append(measurement)
         return grouped
 
-    def _sample_single_type(self, meas_type: MeasType, measurements: List[Measurement]) -> List[Measurement]:
+    def __sample_single_type(self, meas_type: MeasType, measurements: List[Measurement], intervals: set) -> List[Measurement]:
         """
         [Private Method Sample] Samples measurements of a single type.
 
         Args:
             meas_type (MeasType): The type of measurement being sampled.
-            measurements (List[Measurement]): A list of Measurement objects of the same type,
+            measurements (List[Measurement]): A list of Measurement objects of the same type.
 
-            Returns:
-                List[Measurement]: A list of sampled Measurement objects, with one measurement
+        Returns:
+            List[Measurement]: A list of sampled Measurement objects, with one measurement
                                 per interval, sorted by time.
         """
+
 
         sampled = []
         if not measurements:
             return sampled
-        current_interval_end = self._get_interval_start(measurements[0].measurement_time) + timedelta(minutes=self.interval)
+        
+        #print(f"TYPE {meas_type.name}")
+        #DataSampler.print_data(measurements)
+        
+        current_interval_end = self.__get_interval_start(measurements[0].measurement_time) + timedelta(minutes=self.interval)
         last_measurement = None
+
+        #print(f"INTERVAL END {current_interval_end}")
+
+        #print(f"INTERVAL SET {intervals}")
+
         for measurement in measurements:
+            #print(f"CURRENT MEASUREMENT {measurement.measurement_time}")
+
+            if measurement.measurement_time in intervals:
+                sampled.append(Measurement(measurement.measurement_time, meas_type, measurement.value))
+                last_measurement = None
+                continue
+
             while measurement.measurement_time > current_interval_end:
                 if last_measurement:
                     sampled.append(Measurement(current_interval_end, meas_type, last_measurement.value))
                     last_measurement = None
                 current_interval_end += timedelta(minutes=self.interval)
             last_measurement = measurement
+
         if last_measurement:
             sampled.append(Measurement(current_interval_end, meas_type, last_measurement.value))
+            
         return sampled
+    
+    def __generate_intervals(self, measurements: List[Measurement], start_of_sampling: Optional[datetime] = None) -> List[datetime]:
+        if not measurements:
+            return []
+
+        sorted_measurements = sorted(measurements, key=lambda m: m.measurement_time)
+        start_time = start_of_sampling or self.__get_interval_start(sorted_measurements[0].measurement_time)
+        end_time = sorted_measurements[-1].measurement_time
+
+        intervals = []
+        current_time = start_time
+        while current_time <= end_time:
+            intervals.append(current_time)
+            current_time += timedelta(minutes=self.interval)
+
+        return intervals
 
     @staticmethod
     def print_data(data: Union[List[Measurement], dict[MeasType, List[Measurement]]]):
@@ -219,7 +228,7 @@ class DataSampler:
                 for measurement in measurements:
                     print(f"  {{{measurement.measurement_time.isoformat()}, {measurement.value:.2f}}}")
         else:
-            raise TypeError("Input must be either a list of Measurements or a dictionary of MeasType: List[Measurement]")
+            raise TypeError("Input must be either a list of Measurements or List[Measurement]")
 
             
 
